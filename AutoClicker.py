@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import keyboard
+import pynput.mouse as Mouse
 from pynput.mouse import Button, Controller
 from pynput.keyboard import Listener, KeyCode, Key
 from sys import platform
@@ -38,8 +39,8 @@ class App(ctk.CTk):
         self.bind_all("<Button-1>", lambda event: event.widget.focus_set())
 
         self.attributes('-topmost', True)
-        self.update()
-        self.attributes('-topmost', False)
+        # self.update()
+        # self.attributes('-topmost', False)
 
         self.settings_open = False
         self.start_stop_key = start_stop_key
@@ -52,12 +53,18 @@ class App(ctk.CTk):
         self.running = False
         self.program_running = True
         self.click_count = click_count
+        self.cursorpos = False
+        self.choseloc = False
+        self.setx, self.sety = 0, 0
 
         self.create_widgets()
         self.update_click_count()
 
         self.click_thread = threading.Thread(target=self.click_mouse_function)
         self.click_thread.start()
+
+        self.mouseclick = Mouse.Listener(on_click=self.getpos)
+        self.mouseclick.start()
 
         self.listener = Listener(on_press=self.on_press)
         self.listener.start()
@@ -76,7 +83,7 @@ class App(ctk.CTk):
                                           fg_color="#2b0e72", text_color="white")
         self.close_button.place(x=560, y=0)
 
-        self.minimize_button = ctk.CTkButton(self.title_bar, text='-', font=ctk.CTkFont(size=18, weight="bold"), command=self.focus==False, height=29, width=40, 
+        self.minimize_button = ctk.CTkButton(self.title_bar, text='-', font=ctk.CTkFont(size=18, weight="bold"), command=self.minscr, height=29, width=40, 
                                              fg_color="#2b0e72", text_color="white")
         self.minimize_button.place(x=520, y=0)
 
@@ -159,23 +166,23 @@ class App(ctk.CTk):
         self.unlimitrad = ctk.CTkRadioButton(self.content, text="Unlimited", fg_color="white", text_color="white", command=self.changedurationtype2,
                                             width=100, height=10)
         self.unlimitrad.select()
-        self.unlimitrad.place(x=380, y=50)
+        self.unlimitrad.place(x=380, y=45)
 
-        self.repeatrad = ctk.CTkRadioButton(self.content, text="Repeat", fg_color="white", 
+        self.repeatrad = ctk.CTkRadioButton(self.content, text="Repeat                        (Seconds)", fg_color="white", 
                                             text_color="white",  command=self.changedurationtype1, width=100, height=10, value=self.repActive)
-        self.repeatrad.place(x=380, y=80)
+        self.repeatrad.place(x=380, y=75)
 
         self.repeatvar = ctk.StringVar()
         self.repeatvar.set("5")
         self.repeatentry = ctk.CTkEntry(self.content, textvariable=self.repeatvar, width=60, height=20, fg_color="light grey", state="readonly")
-        self.repeatentry.place(x=460, y=80)
+        self.repeatentry.place(x=460, y=75)
 
         self.locationlabel = ctk.CTkLabel(self.content, text="Location:", text_color="white", width=125, height=25)
-        self.locationlabel.place(x=275, y=120)
+        self.locationlabel.place(x=275, y=110)
 
-        self.clicklocbut = ctk.CTkButton(self.content, text="Choose location", width=150, height=30, command=self.getcursorpos)
-        self.clicklocbut.place(x=380, y=140)
-        self.folcurbut = ctk.CTkButton(self.content, text="Follow cursor", width=150, height=30)
+        self.clicklocbut = ctk.CTkButton(self.content, text="Choose Click Location\n x: 0  y: 0  ", width=150, height=40, command=self.getcursorpos, fg_color="grey")
+        self.clicklocbut.place(x=380, y=130)
+        self.folcurbut = ctk.CTkButton(self.content, text="Follow cursor", width=150, height=30, fg_color="purple", command=self.followcur)
         self.folcurbut.place(x=380, y=180)
 
         self.clickcount_label = ctk.CTkLabel(self.content, text="Click Count:", width=70, height=25, text_color="white")
@@ -183,15 +190,34 @@ class App(ctk.CTk):
 
         self.click_count_var = ctk.StringVar()
         self.click_count_var.set(str(click_count))
-        self.click_count_entry = ctk.CTkEntry(self.content, textvariable=self.click_count_var, state="readonly", width=70, height=25)
+        self.click_count_entry = ctk.CTkEntry(self.content, textvariable=self.click_count_var, state="readonly", width=70, height=25, fg_color="light grey")
         self.click_count_entry.place(rely=0.78, relx=0.20, x=0, y=0, anchor="s")
 
         self.run_button = ctk.CTkButton(self.content, hover=False, text="State: Running", fg_color="#2b0e72", width=600, height=50)
         self.run_button.place(rely=1.0, relx=0.5, x=0, y=0, anchor="s")
 
+    def minscr(self):
+            self.iconify()
+
+    def followcur(self):
+        self.choseloc = False
+        self.folcurbut.configure(fg_color="purple")
+        self.clicklocbut.configure(fg_color="grey")
+
     def getcursorpos(self):
-        cursor = Controller()
-        print(cursor.position)
+        self.cursorpos = True
+        self.clicklocbut.configure(text="Click desired area", fg_color="green")
+        self.choseloc = True
+        self.folcurbut.configure(fg_color="grey")
+
+    def getpos(self, x, y, button, pressed):
+        if self.cursorpos:
+            if button == self.button and pressed:
+                self.setx = x
+                self.sety = y
+            
+                self.cursorpos = False
+                self.clicklocbut.configure(text=f"Choose location\n x: {self.setx}  y: {self.sety}  ", fg_color="purple")
 
     def changedurationtype1(self):
         self.repActive=True
@@ -230,6 +256,8 @@ class App(ctk.CTk):
         mouse = Controller()
         while self.program_running:
             while self.running:
+                if self.choseloc:
+                    mouse.position = (self.setx, self.sety)
                 if self.ADactive:
                     offset = uniform(0.01, 0.05)
                 else:
@@ -297,7 +325,7 @@ class App(ctk.CTk):
 
     def opensettings(self):
         if not self.settings_open:
-            self.settings_button.configure(fg_color="light grey")
+            self.settings_button.configure(fg_color="light blue")
             self.settings_open = True
             self.update()
             self.newWindow = ctk.CTkToplevel(self)
@@ -319,7 +347,7 @@ class App(ctk.CTk):
         else:
             self.newWindow.destroy()
             self.settings_open = False
-            self.settings_button.configure(fg_color="white")
+            self.settings_button.configure(fg_color="#2b0e72")
 
     def on_settings_close(self):
         self.newWindow.destroy()
@@ -353,48 +381,45 @@ class App(ctk.CTk):
             self.title_barN.bind('<B1-Motion>', move_windowN)
         self.title_barN.bind('<Button-1>', get_posN)
 
+        self.appearanceframe = ctk.CTkFrame(self.newWindow, fg_color="#353190", width=400, height=270)
+        self.appearanceframe.place(x=0,y=30)
 
-        # self.appearanceframe = ctk.CTkFrame(self.newWindow, border_color="white", width=200, height=50)
-        # self.appearanceframe.grid(row=0, column=0, padx=5, pady=5)
+        self.APPlabel = ctk.CTkLabel(self.appearanceframe, text="Appearance:", width=70, height=30, text_color="white")
+        self.APPlabel.place(x=10,y=20)
 
-        # self.APPlabel = ctk.CTkLabel(self.appearanceframe, text="Appearance:")
-        # self.APPlabel.grid(row=0, column=0, padx=5, pady=5)
+        self.APPcombobox = ctk.CTkComboBox(self.appearanceframe, values=["Light", "Dark"], state="readonly", command=self.theme_change)
+        if self.theme:
+            self.APPcombobox.set("Light")
+        else: 
+            self.APPcombobox.set("Dark")
+        self.APPcombobox.place(x=90,y=20)
 
-        # self.APPcombobox = ctk.CTkComboBox(self.appearanceframe, values=["Light", "Dark"], state="readonly", command=self.theme_change)
-        # if self.theme:
-        #     self.APPcombobox.set("Light")
-        # else: 
-        #     self.APPcombobox.set("Dark")
-        # self.APPcombobox.grid(row=0, column=1, padx=5, pady=5)
+        self.antiDecLbl = ctk.CTkLabel(self.newWindow, text="Anti-detection:", width=70, height=30, text_color="white")
+        self.antiDecLbl.place(x=10,y=90)
 
-        # self.aotframe = ctk.CTkFrame(self.newWindow, border_color="white", width=200, height=50)
-        # self.aotframe.grid(row=1, column=0, padx=5, pady=5)
+        self.antiDecSw = ctk.CTkSwitch(self.newWindow, hover=False, text="", command=self.ADtoggle, fg_color="white", progress_color="light grey")
+        if ADactive:
+            self.antiDecSw.select()
+        else:
+            self.antiDecSw.deselect()
+        self.antiDecSw.place(x=110,y=95)
 
-        # self.antiDecLbl = ctk.CTkLabel(self.aotframe, text="Anti-detection:")
-        # self.antiDecLbl.grid(row=1, column=0, padx=5)
+        self.antiDecImg = ctk.CTkImage(Image.open("img/info.png"))
+        self.antiDecInfo = ctk.CTkLabel(self.newWindow, image=self.antiDecImg, text="", width=20, height=20)
+        self.antiDecInfo.place(x=160,y=95)
+        self.antiToolTip = CTkToolTip.CTkToolTip(self.antiDecInfo, message="Adds a random short delay between each click", 
+                                                 delay=0, alpha=1)
+        self.antiToolTip.attributes("-topmost", True)
 
-        # self.antiDecSw = ctk.CTkSwitch(self.aotframe, hover=False, text="", command=self.ADtoggle)
-        # if ADactive:
-        #     self.antiDecSw.select()
-        # else:
-        #     self.antiDecSw.deselect()
-        # self.antiDecSw.grid(row=1, column=1, padx=5)
+        self.aotlabel = ctk.CTkLabel(self.newWindow, text="Always on Top:", text_color="white")
+        self.aotlabel.place(x=10,y=130)
 
-        # self.antiDecImg = ctk.CTkImage(Image.open("img/info.png"))
-        # self.antiDecInfo = ctk.CTkLabel(self.aotframe, image=self.antiDecImg, text="", width=20, height=20)
-        # self.antiDecInfo.grid(row=1, column=1)
-        # self.antiToolTip = CTkToolTip.CTkToolTip(self.antiDecInfo, message="Adds a random short delay between each click", 
-        #                                          delay=0, alpha=1)
-        # self.aotlabel = ctk.CTkLabel(self.aotframe, text="Always on Top:")
-        # self.aotlabel.grid(row=0, column=0, padx=5, pady=5)
-
-        # self.AOTswitch = ctk.CTkSwitch(self.aotframe, text="", command=self.AOTtoggle)
-        # if self.AOTactive:
-        #     self.AOTswitch.select()
-        # else:
-        #     self.AOTswitch.deselect()
-        # self.AOTswitch.grid(row=0, column=1, padx=5, pady=5)
-
+        self.AOTswitch = ctk.CTkSwitch(self.newWindow, text="", command=self.AOTtoggle, fg_color="white", progress_color="light grey")
+        if self.AOTactive:
+            self.AOTswitch.select()
+        else:
+            self.AOTswitch.deselect()
+        self.AOTswitch.place(x=110, y=135)
     def theme_change(self, theme_choice):
         self.focus()
         theme_choice = self.APPcombobox.get()
@@ -438,8 +463,6 @@ class App(ctk.CTk):
                     threading.Thread(target=self.repeat_callback, daemon=True).start()
 
     def repeat_callback(self):
-        print(self.x)
-        print(self.click_count)
         while self.click_count != self.x:
             time.sleep(0.01)  
         self.stop_clicking()
