@@ -429,6 +429,9 @@ class App(ctk.CTk):
         else:
             self.theme = False
             self.appearance_mode = ctk.set_appearance_mode("dark")
+            self.click_count_entry.configure(text_color="black")
+            self.startkey_label.configure(text_color="black")
+            self.repeatentry.configure(text_color="black")
         self.newWindow.lift(self)
 
     def AOTtoggle(self):
