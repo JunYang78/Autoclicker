@@ -1,1 +1,0 @@
-[{"action": "pressed_key", "key": "Key.cmd"}, {"action": "pressed_key", "key": "p"}, {"action": "released_key", "key": "p"}, {"action": "released_key", "key": "Key.cmd"}, {"action": "clicked", "button": "Button.left", "x": 360, "y": 453}, {"action": "unclicked", "button": "Button.left", "x": 360, "y": 453}]
