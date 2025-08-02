@@ -31,7 +31,7 @@ class App(ctk.CTk):
         super().__init__()
         self.title("Auto Clicker")
         self.geometry("600x300")
-        self.resizable(False, False)
+        self.resizable(True, True)
         self.overrideredirect(True)
         self.protocol("WM_DELETE_WINDOW", self.quit_app)
         self.attributes('-alpha', 0.95)
@@ -74,7 +74,7 @@ class App(ctk.CTk):
         self.title_bar = ctk.CTkFrame(self, height=30, width=600, fg_color="#2b0e72")
         self.title_bar.pack(side="top", fill="x")
 
-        self.icoImg = ctk.CTkImage(Image.open('Autoclicker\img\cursor.ico'))
+        self.icoImg = ctk.CTkImage(Image.open('img/cursor.ico'))
         self.title_text = ctk.CTkLabel(self.title_bar, text=" Autoclicker", height=29, width=100, fg_color="#2b0e72", text_color="white", font=ctk.CTkFont(family="segoe ui", size=15, weight="bold"),
                                        image=self.icoImg, compound="left", anchor="w")
         self.title_text.place(x=5, y=0)
@@ -87,7 +87,7 @@ class App(ctk.CTk):
                                              fg_color="#2b0e72", text_color="white")
         self.minimize_button.place(x=520, y=0)
 
-        self.settingsimage = ctk.CTkImage(Image.open('Autoclicker\img\settings.png'))
+        self.settingsimage = ctk.CTkImage(Image.open('img/settings.png'))
         self.settings_button = ctk.CTkButton(self.title_bar, text="", command=self.opensettings, fg_color="#2b0e72",
                                              image=self.settingsimage, width=40, height=29)
         self.settings_button.place(x=480, y=0)
@@ -356,7 +356,7 @@ class App(ctk.CTk):
         self.title_barN = ctk.CTkFrame(self.newWindow, height=30, width=600, fg_color="#2b0e72")
         self.title_barN.pack(side="top", fill="x")
 
-        self.icoImgN = ctk.CTkImage(Image.open('Autoclicker\img\settings.png'))
+        self.icoImgN = ctk.CTkImage(Image.open('img/settings.png'))
         self.title_textN = ctk.CTkLabel(self.title_barN, text=" Settings", height=29, width=100, fg_color="#2b0e72", text_color="white",
                                        image=self.icoImgN, compound="left", anchor="w")
         self.title_textN.place(x=5, y=0)
@@ -402,7 +402,7 @@ class App(ctk.CTk):
             self.antiDecSw.deselect()
         self.antiDecSw.place(x=110,y=95)
 
-        self.antiDecImg = ctk.CTkImage(Image.open("Autoclicker\img\info.png"))
+        self.antiDecImg = ctk.CTkImage(Image.open("img/info.png"))
         self.antiDecInfo = ctk.CTkLabel(self.newWindow, image=self.antiDecImg, text="", width=20, height=20)
         self.antiDecInfo.place(x=160,y=95)
         self.antiToolTip = CTkToolTip.CTkToolTip(self.antiDecInfo, message="Adds a random short delay between each click", 
